@@ -71,11 +71,12 @@ fun HealthMateNavHost(
             // The form's ViewModel reads {recordId} from the route itself (SavedStateHandle).
             RecordFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
         }
-        pushedComposable(HealthMateDestination.RecordDetails.route, recordIdArgument) { entry ->
+        pushedComposable(HealthMateDestination.RecordDetails.route, recordIdArgument) {
+            // The details ViewModel reads {recordId} from the route itself (SavedStateHandle).
             RecordDetailsScreen(
-                recordId = entry.recordId(),
                 onBack = { navController.popBackStack() },
                 onEdit = { id -> navController.navigate(HealthMateDestination.EditRecord.createRoute(id)) },
+                onDeleted = { navController.popBackStack() },
             )
         }
         pushedComposable(HealthMateDestination.DesignSystem.route) {
@@ -86,8 +87,6 @@ fun HealthMateNavHost(
 
 /** The {recordId} part of a route is a Long (the database row id). */
 private val recordIdArgument = listOf(navArgument(RECORD_ID_ARG) { type = NavType.LongType })
-
-private fun NavBackStackEntry.recordId(): Long = arguments?.getLong(RECORD_ID_ARG) ?: 0L
 
 /** A destination that slides in from the right (iOS "push") and slides back out on Back. */
 private fun NavGraphBuilder.pushedComposable(
