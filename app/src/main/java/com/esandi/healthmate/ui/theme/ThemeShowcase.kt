@@ -15,29 +15,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
-import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.esandi.healthmate.ui.components.ComponentGallery
+import com.esandi.healthmate.ui.components.MetricCard
+import com.esandi.healthmate.ui.components.MetricType
 
 /**
  * TEMPORARY design-system preview (task 2.2).
@@ -52,13 +47,14 @@ fun ThemeShowcaseScreen(modifier: Modifier = Modifier) {
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
-                top = innerPadding.calculateTopPadding() + 24.dp,
+                top = innerPadding.calculateTopPadding() + 16.dp,
                 bottom = innerPadding.calculateBottomPadding() + 24.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(28.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item { ShowcaseHeader() }
             item { MetricSection() }
+            item { ComponentGallery() }
             item { ColourSection() }
             item { TypeSection() }
             item { ControlsSection() }
@@ -92,34 +88,15 @@ private fun ShowcaseHeader() {
 
 @Composable
 private fun MetricSection() {
-    val m = HealthMateStyle.metrics
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionTitle("Metric colours")
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricPreview(Icons.AutoMirrored.Rounded.DirectionsWalk, "7,850", "steps", m.steps, m.stepsContainer, Modifier.weight(1f))
-            MetricPreview(Icons.Rounded.LocalFireDepartment, "420", "kcal burned", m.calories, m.caloriesContainer, Modifier.weight(1f))
+            MetricCard(MetricType.STEPS, "7,850", "steps", Modifier.weight(1f))
+            MetricCard(MetricType.CALORIES, "420", "kcal burned", Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricPreview(Icons.Rounded.WaterDrop, "2,000", "ml water", m.water, m.waterContainer, Modifier.weight(1f))
-            MetricPreview(Icons.Rounded.Bedtime, "7h 31m", "sleep", m.sleep, m.sleepContainer, Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun MetricPreview(
-    icon: ImageVector,
-    value: String,
-    label: String,
-    color: Color,
-    container: Color,
-    modifier: Modifier = Modifier,
-) {
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, color = container) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
-            Text(text = value, style = HealthMateStyle.numbers.large, color = MaterialTheme.colorScheme.onSurface)
-            Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            MetricCard(MetricType.WATER, "2,000", "ml water", Modifier.weight(1f))
+            MetricCard(MetricType.SLEEP, "7h 31m", "sleep", Modifier.weight(1f))
         }
     }
 }
@@ -162,7 +139,7 @@ private fun TypeSection() {
         SectionTitle("Typography")
         Text("Headline · Plus Jakarta Sans", style = MaterialTheme.typography.headlineSmall)
         Text("12,480", style = HealthMateStyle.numbers.hero, color = HealthMateStyle.metrics.steps)
-        Text("Numbers · Space Grotesk", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Numbers · Inter (tabular figures)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("Title and labels · Roboto", style = MaterialTheme.typography.titleMedium)
         Text(
             "Paragraph · Inter. You walked 1,240 more steps than yesterday. Keep it up to reach your weekly goal.",
