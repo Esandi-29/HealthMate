@@ -18,8 +18,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -64,6 +64,9 @@ fun BigNumberInput(
     modifier: Modifier = Modifier,
     sliderMax: Int? = null,
     sliderStep: Int = 1,
+    caption: String? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    illustration: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -89,22 +92,23 @@ fun BigNumberInput(
                     },
                 )
                 Text(unitLabel, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (caption != null) {
+                    Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
+            if (trailing != null) trailing()
         }
+        if (illustration != null) illustration()
         if (sliderMax != null) {
             val current = value.toIntOrNull()?.coerceIn(0, sliderMax) ?: 0
-            Slider(
+            GradientSlider(
                 value = current.toFloat(),
                 onValueChange = { raw ->
                     val snapped = (raw / sliderStep).roundToInt() * sliderStep
                     onValueChange(snapped.toString())
                 },
                 valueRange = 0f..sliderMax.toFloat(),
-                colors = SliderDefaults.colors(
-                    thumbColor = metric.color,
-                    activeTrackColor = metric.color,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                ),
+                color = metric.color,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("0", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -119,11 +123,15 @@ fun BigNumberInput(
 @Composable
 fun WaterQuickChips(selectedText: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
     val metric = MetricType.WATER
+    val haptic = LocalHapticFeedback.current
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(250, 500, 750, 1000).forEach { ml ->
             FilterChip(
                 selected = selectedText == ml.toString(),
-                onClick = { onSelect(ml.toString()) },
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onSelect(ml.toString())
+                },
                 label = { Text(if (ml == 1000) "1 L" else "$ml ml") },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = metric.containerColor,
@@ -148,11 +156,12 @@ fun SleepInput(
     val metric = MetricType.SLEEP
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            MetricBadge(metric, size = 44)
-            Column {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                MetricBadge(metric, size = 44)
                 Text(Formatters.sleep(sleepMinutes), style = HealthMateStyle.numbers.hero)
                 Text("time asleep", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            SleepDial(bedtime = bedtime, wakeTime = wakeTime, color = metric.color)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TimeTile("Bedtime", Icons.Rounded.Bedtime, bedtime, onBedtimeChange, Modifier.weight(1f))

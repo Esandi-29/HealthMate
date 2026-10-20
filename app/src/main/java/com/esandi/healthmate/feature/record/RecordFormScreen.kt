@@ -1,6 +1,13 @@
 package com.esandi.healthmate.feature.record
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,7 +43,10 @@ import com.esandi.healthmate.ui.components.MetricTabs
 import com.esandi.healthmate.ui.components.MetricType
 import com.esandi.healthmate.ui.components.PrimaryButton
 import com.esandi.healthmate.ui.components.SecondaryButton
+import com.esandi.healthmate.ui.components.color
+import com.esandi.healthmate.ui.theme.HealthMateMotion
 import com.esandi.healthmate.ui.theme.HealthMateTheme
+import com.esandi.healthmate.util.Formatters
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -105,26 +115,45 @@ fun RecordFormContent(
 
                 HealthCard(Modifier.fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(18.dp)) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        when (state.metric) {
-                            MetricType.STEPS -> BigNumberInput(
-                                metric = MetricType.STEPS, value = state.stepsText, onValueChange = onStepsChange,
-                                unitLabel = "steps", sliderMax = 20_000, sliderStep = 50,
-                            )
-                            MetricType.CALORIES -> BigNumberInput(
-                                metric = MetricType.CALORIES, value = state.caloriesText, onValueChange = onCaloriesChange,
-                                unitLabel = "kcal burned", sliderMax = 1_500, sliderStep = 10,
-                            )
-                            MetricType.WATER -> {
-                                BigNumberInput(
-                                    metric = MetricType.WATER, value = state.waterText, onValueChange = onWaterChange,
-                                    unitLabel = "ml of water",
-                                )
-                                WaterQuickChips(selectedText = state.waterText, onSelect = onWaterChange)
+                        // Switching tabs cross-fades the panels (see transitionSpec below).
+                        AnimatedContent(
+                            targetState = state.metric,
+                            // iOS-style cross-fade with a slight zoom; the card resizes with a gentle spring.
+                            transitionSpec = {
+                                (fadeIn(tween(220, delayMillis = 60)) + scaleIn(tween(220, delayMillis = 60), initialScale = 0.97f)) togetherWith
+                                    fadeOut(tween(120)) using
+                                    SizeTransform(clip = false) { _, _ -> HealthMateMotion.gentle() }
+                            },
+                            label = "metricPanel",
+                        ) { metric ->
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                when (metric) {
+                                    MetricType.STEPS -> BigNumberInput(
+                                        metric = MetricType.STEPS, value = state.stepsText, onValueChange = onStepsChange,
+                                        unitLabel = "steps", sliderMax = 20_000, sliderStep = 50,
+                                        caption = "${Formatters.number(state.todayTotals.steps)} already today",
+                                        illustration = { FootprintTrail(progress = state.stepsProgress, color = MetricType.STEPS.color) },
+                                    )
+                                    MetricType.CALORIES -> BigNumberInput(
+                                        metric = MetricType.CALORIES, value = state.caloriesText, onValueChange = onCaloriesChange,
+                                        unitLabel = "kcal burned", sliderMax = 1_500, sliderStep = 10,
+                                        trailing = { CalorieFlame(intensity = state.calorieIntensity) },
+                                    )
+                                    MetricType.WATER -> {
+                                        BigNumberInput(
+                                            metric = MetricType.WATER, value = state.waterText, onValueChange = onWaterChange,
+                                            unitLabel = "ml of water",
+                                            caption = "${Formatters.waterShort(state.waterAfterEntryMl)} of ${Formatters.waterShort(state.goals.waterMl)} today",
+                                            trailing = { WaterBottle(fillFraction = state.waterProgress, color = MetricType.WATER.color) },
+                                        )
+                                        WaterQuickChips(selectedText = state.waterText, onSelect = onWaterChange)
+                                    }
+                                    MetricType.SLEEP -> SleepInput(
+                                        bedtime = state.bedtime, wakeTime = state.wakeTime, sleepMinutes = state.sleepMinutes,
+                                        onBedtimeChange = onBedtimeChange, onWakeTimeChange = onWakeTimeChange,
+                                    )
+                                }
                             }
-                            MetricType.SLEEP -> SleepInput(
-                                bedtime = state.bedtime, wakeTime = state.wakeTime, sleepMinutes = state.sleepMinutes,
-                                onBedtimeChange = onBedtimeChange, onWakeTimeChange = onWakeTimeChange,
-                            )
                         }
                         state.valueError?.let { FieldError(it) }
                     }

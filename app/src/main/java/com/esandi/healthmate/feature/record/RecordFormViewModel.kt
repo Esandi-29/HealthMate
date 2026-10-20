@@ -2,6 +2,8 @@ package com.esandi.healthmate.feature.record
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import com.esandi.healthmate.data.model.DailyGoals
+import com.esandi.healthmate.data.model.DailyTotals
 import com.esandi.healthmate.data.model.HealthRecord
 import com.esandi.healthmate.data.sample.SampleData
 import com.esandi.healthmate.navigation.HealthMateDestination.Companion.RECORD_ID_ARG
@@ -30,9 +32,26 @@ data class RecordFormUiState(
     val noteError: String? = null,
     /** Becomes true once the record passed validation and was saved; the screen then closes. */
     val isSaved: Boolean = false,
+    /** Today's totals before this entry, and the daily goals - used by the animated illustrations. */
+    val todayTotals: DailyTotals = DailyTotals(),
+    val goals: DailyGoals = DailyGoals(),
 ) {
     val isEditing: Boolean get() = recordId != null
     val sleepMinutes: Int get() = RecordValidator.sleepMinutes(bedtime, wakeTime)
+
+    private fun entered(text: String) = text.toIntOrNull() ?: 0
+
+    /** Steps today including this entry, as a share of the daily goal (footprint trail). */
+    val stepsProgress: Float get() = (todayTotals.steps + entered(stepsText)).toFloat() / goals.steps
+
+    /** Water today including this entry (shown in the caption under the amount). */
+    val waterAfterEntryMl: Int get() = todayTotals.waterMl + entered(waterText)
+
+    /** Bottle level: the bottle is 1 L and shows this drink only, so it starts empty. */
+    val waterProgress: Float get() = entered(waterText) / BOTTLE_ML.toFloat()
+
+    /** Size of this calorie entry for the flame: 800 kcal or more is a full flame. */
+    val calorieIntensity: Float get() = entered(caloriesText) / 800f
 }
 
 /**
@@ -42,12 +61,18 @@ data class RecordFormUiState(
  * The record id comes from the navigation route ("record/edit/{recordId}") via [SavedStateHandle];
  * it is absent when adding a new record.
  */
+private const val BOTTLE_ML = 1_000
+
 class RecordFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RecordFormUiState())
     val uiState: StateFlow<RecordFormUiState> = _uiState.asStateFlow()
 
     init {
+        // Phase 3 (task 3.3): today's totals will come from the repository.
+        val today = LocalDate.now()
+        _uiState.update { it.copy(todayTotals = DailyTotals.of(SampleData.records(today).filter { r -> r.date == today })) }
+
         val id = savedStateHandle.get<Long>(RECORD_ID_ARG)
         if (id != null) {
             // Phase 3 (task 3.2): load from the repository instead of sample data.
@@ -58,7 +83,7 @@ class RecordFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private fun loadForEditing(record: HealthRecord) {
         val metric = record.primaryMetric()
-        _uiState.value = RecordFormUiState(
+        _uiState.value = _uiState.value.copy(
             recordId = record.id,
             metric = metric,
             date = record.date,
