@@ -13,3 +13,16 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Kotlin compiler cache
+.kotlin
+
+# Release signing: never commit keys or their passwords (public repo)
+*.jks
+*.keystore
+keystore.properties
+
+# Release builds (the APK is shared via Google Drive, not Git)
+/app/release
+*.apk
+*.aab
