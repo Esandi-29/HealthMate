@@ -55,9 +55,10 @@ private val DarkColors = darkColorScheme(
     onPrimaryContainer = DarkOnSurface,
     secondary = SoftViolet,                     // P2 - 4.84:1 on cards
     onSecondary = Color.Black,                  // 5.98:1
-    secondaryContainer = Color(0xFF453996),     // P1 Indigo at 70% on black: clearly purple but softer
-                                                // than the primary button, as a secondary action should be
-    onSecondaryContainer = Color.White,         // 9.22:1
+    // Secondary (tonal) buttons mirror light mode: a faint tint with coloured text, so the solid
+    // primary button stays clearly dominant. Primary vs secondary = 5.40:1 (light mode: 5.19:1).
+    secondaryContainer = Color(0xFF1C1830),     // P2 Soft Violet at 20% on black
+    onSecondaryContainer = SoftViolet,          // P2 text on the tint, 4.89:1
     tertiary = Success,                         // S1
     onTertiary = Color.Black,
     tertiaryContainer = Color(0xFF244F41),      // 24% S1 tint
