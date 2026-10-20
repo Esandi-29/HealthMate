@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark variant of the base window theme. -->
+    <style name="Theme.HealthMate" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/hm_window_background</item>
+    </style>
+</resources>

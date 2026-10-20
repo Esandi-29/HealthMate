@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.HealthMate" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Base window theme. Compose draws everything on top; this only sets the colour shown
+         behind it, so there is no white flash in dark mode. -->
+    <style name="Theme.HealthMate" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/hm_window_background</item>
+    </style>
+
+    <!-- Splash screen shown while the app starts (androidx core-splashscreen). -->
+    <style name="Theme.HealthMate.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/hm_splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.HealthMate</item>
+    </style>
 </resources>
