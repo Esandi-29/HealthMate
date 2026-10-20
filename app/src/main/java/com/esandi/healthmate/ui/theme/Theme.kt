@@ -11,23 +11,24 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+// Light mode: palette colours on the iOS-style grey page with white cards.
 private val LightColors = lightColorScheme(
-    primary = RoyalBlue,
+    primary = StrongBlue,                       // B2 - white text on it 5.96:1
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD9E4F8),
-    onPrimaryContainer = Color(0xFF00276B),
-    secondary = Indigo,
+    primaryContainer = Color(0xFFE6EFFA),       // 10% B2 tint
+    onPrimaryContainer = StrongBlue,            // 5.13:1
+    secondary = Indigo,                         // P1 - white text on it 5.71:1
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE6E1FB),
-    onSecondaryContainer = Color(0xFF241562),
-    tertiary = DeepMint,
-    onTertiary = Color.White,
-    tertiaryContainer = PaleMint,
-    onTertiaryContainer = Color(0xFF00382C),
-    error = DeepPink,
+    secondaryContainer = Color(0xFFEFEEFB),     // 10% P1 tint
+    onSecondaryContainer = Indigo,              // 4.97:1
+    tertiary = MintGreen,                       // G1
+    onTertiary = LightOnSurface,                // 6.99:1
+    tertiaryContainer = Color(0xFFE7F6F3),      // 10% G1 tint
+    onTertiaryContainer = LightOnSurface,
+    error = Magenta,                            // R3 "important alerts" - 4.88:1 on white
     onError = Color.White,
-    errorContainer = Color(0xFFFFDDE3),
-    onErrorContainer = Color(0xFF5C0019),
+    errorContainer = Color(0xFFFBE6F3),         // 10% R3 tint
+    onErrorContainer = PurplePink,              // R4
     background = LightBackground,
     onBackground = LightOnSurface,
     surface = LightSurface,
@@ -36,49 +37,50 @@ private val LightColors = lightColorScheme(
     onSurfaceVariant = LightOnSurfaceVariant,
     surfaceContainerLowest = Color.White,
     surfaceContainerLow = LightSurfaceLow,
-    surfaceContainer = LightSurfaceContainer,
+    surfaceContainer = LightSurfaceContainer,   // cards
     surfaceContainerHigh = LightSurfaceHigh,
     surfaceContainerHighest = LightSurfaceHighest,
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
-    inverseSurface = DeepPurple,
+    inverseSurface = DarkSurfaceHigh,           // snackbars
     inverseOnSurface = DarkOnSurface,
     inversePrimary = BrightBlue,
 )
 
+// Dark mode: the brighter palette shades on pure black with elevated grey cards.
 private val DarkColors = darkColorScheme(
-    primary = BrightBlue,
-    onPrimary = Color(0xFF001A4D),
-    primaryContainer = RoyalBlue,
-    onPrimaryContainer = Color(0xFFDCE6FF),
-    secondary = SoftViolet,
-    onSecondary = Color(0xFF1B0F4D),
-    secondaryContainer = Indigo,
-    onSecondaryContainer = Color(0xFFECE8FF),
-    tertiary = Success,
-    onTertiary = Color(0xFF003826),
-    tertiaryContainer = DeepMint,
-    onTertiaryContainer = Color(0xFFE0FFF3),
-    error = Color(0xFFFF7A93),
-    onError = Color(0xFF4A0016),
-    errorContainer = Color(0xFF7A1230),
-    onErrorContainer = Color(0xFFFFD9DF),
+    primary = BrightBlue,                       // BL2 - 5.35:1 on cards
+    onPrimary = Color.Black,                    // 6.60:1
+    primaryContainer = Color(0xFF2C3754),       // 24% BL2 tint on the card colour
+    onPrimaryContainer = DarkOnSurface,
+    secondary = SoftViolet,                     // P2 - 4.84:1 on cards
+    onSecondary = Color.Black,                  // 5.98:1
+    secondaryContainer = Color(0xFF363250),     // 24% P2 tint
+    onSecondaryContainer = DarkOnSurface,
+    tertiary = Success,                         // S1
+    onTertiary = Color.Black,
+    tertiaryContainer = Color(0xFF244F41),      // 24% S1 tint
+    onTertiaryContainer = DarkOnSurface,
+    error = Pink,                               // R2 - 5.53:1 on black
+    onError = Color.Black,
+    errorContainer = Color(0xFF4F242F),         // 24% R2 tint
+    onErrorContainer = DarkOnSurface,
     background = DarkBackground,
     onBackground = DarkOnSurface,
     surface = DarkSurface,
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceHigh,
     onSurfaceVariant = DarkOnSurfaceVariant,
-    surfaceContainerLowest = Color(0xFF0D0717),
+    surfaceContainerLowest = Color(0xFF000000),
     surfaceContainerLow = DarkSurfaceLow,
-    surfaceContainer = DarkSurfaceContainer,
+    surfaceContainer = DarkSurfaceContainer,    // cards
     surfaceContainerHigh = DarkSurfaceHigh,
     surfaceContainerHighest = DarkSurfaceHighest,
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
     inverseSurface = DarkOnSurface,
-    inverseOnSurface = DeepPurple,
-    inversePrimary = RoyalBlue,
+    inverseOnSurface = DarkBackground,
+    inversePrimary = StrongBlue,
 )
 
 /**
@@ -103,33 +105,35 @@ data class MetricColors(
     val brandGradient: List<Color>,
 )
 
+// Metric colours: vivid palette shades, with soft tints of the same colour for badges and tiles
+// (as Apple Health does). Light tints are 10% colour on white; dark tints are 24% on the card grey.
 private val LightMetricColors = MetricColors(
-    steps = Tangerine,               // O3: deeper orange so it stays visible on white
-    stepsContainer = Color(0xFFFDE6D3),
-    calories = Coral,                // R1
-    caloriesContainer = Color(0xFFFCE1E1),
-    water = StrongBlue,              // B2: deeper blue for contrast on white
-    waterContainer = Color(0xFFDFE9FB),
-    sleep = Indigo,                  // P1
-    sleepContainer = Color(0xFFE6E1FB),
-    success = DeepMint,
-    warning = DeepAmber,
-    info = Indigo,
+    steps = Tangerine,                   // O3 - 3.43:1 on white
+    stepsContainer = Color(0xFFFEEEE6),
+    calories = Coral,                    // R1 - "calories = red" from the brief
+    caloriesContainer = Color(0xFFFEEFEF),
+    water = VividBlue,                   // B3 - "water = blue", 4.33:1 on white
+    waterContainer = Color(0xFFE6F2FB),
+    sleep = SoftViolet,                  // P2 - 3.51:1 on white
+    sleepContainer = Color(0xFFF3F1FE),
+    success = MintGreen,                 // G1
+    warning = GoldenYellow,              // Y1 - use as a fill behind dark text, not as text
+    info = Indigo,                       // P1
     brandGradient = BrandGradientColors,
 )
 
 private val DarkMetricColors = MetricColors(
-    steps = Orange,                  // O2
-    stepsContainer = Color(0xFF3D2612),
-    calories = Coral,                // R1
-    caloriesContainer = Color(0xFF3F1C26),
-    water = BrightBlue,              // BL2
-    waterContainer = Color(0xFF1C2A52),
-    sleep = SoftViolet,              // P2
-    sleepContainer = Color(0xFF2B2156),
-    success = Success,
-    warning = GoldenYellow,
-    info = SoftViolet,
+    steps = Orange,                      // O2 - 6.90:1 on cards
+    stepsContainer = Color(0xFF503617),
+    calories = Coral,                    // R1 - 5.24:1
+    caloriesContainer = Color(0xFF4F2C2D),
+    water = BrightBlue,                  // BL2 - 5.35:1
+    waterContainer = Color(0xFF2C3754),
+    sleep = SoftViolet,                  // P2 - 4.84:1
+    sleepContainer = Color(0xFF363250),
+    success = Success,                   // S1
+    warning = GoldenYellow,              // Y1
+    info = SoftViolet,                   // P2
     brandGradient = BrandGradientColors,
 )
 

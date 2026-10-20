@@ -6,8 +6,9 @@ import androidx.compose.ui.graphics.Color
  * HealthMate colour palette, taken from the HealthMate visual guide (section 2, Colour Palette).
  * Codes in brackets (N1, B1, ...) match the guide so the report can reference them.
  *
- * A few "deep" shades are derived from palette colours where the original is too light to
- * read on a white background (WCAG 2.1 contrast: 4.5:1 for text, 3:1 for icons and graphics).
+ * Every brand and metric colour in the app comes from this palette. Each role uses the palette
+ * shade that passes WCAG 2.1 contrast on its background (4.5:1 for text, 3:1 for icons and
+ * graphics); the full contrast check is recorded in docs/DEV_LOG.md (DL-16).
  */
 
 // Neutrals: backgrounds, surfaces, borders and subtle text
@@ -60,34 +61,34 @@ val Error = Coral                    // S3
 val Info = SoftViolet                // S4
 val Link = BrightBlue                // S5
 
-// Derived deep shades for readable text and icons on light backgrounds
-val DeepMint = Color(0xFF0B7F69)     // from G1
-val DeepPink = Color(0xFFC4214A)     // from R2
-val DeepAmber = Color(0xFF8A5A00)    // from Y1
+// Surfaces follow an iOS-style "grouped" look (user direction, 20 Oct): a light grey page with
+// white cards in light mode, and pure black with elevated greys in dark mode.
+// Cards are separated by colour alone - no borders or heavy shadows.
 
-// Light theme surfaces (tinted with Soft Sage N2)
-val LightBackground = Color(0xFFF6F8F7)
-val LightSurface = Color(0xFFFBFCFB)
-val LightSurfaceLow = Color(0xFFF2F5F4)
-val LightSurfaceContainer = Color(0xFFECF1EF)
-val LightSurfaceHigh = Color(0xFFE5ECE9)
-val LightSurfaceHighest = Color(0xFFDDE6E2)
-val LightOnSurface = Color(0xFF151A1F)
-val LightOnSurfaceVariant = Color(0xFF4F5B58)
-val LightOutline = Color(0xFF7C8A86)
-val LightOutlineVariant = Color(0xFFC9D6D3)
+// Light theme surfaces
+val LightBackground = Color(0xFFF2F2F7)        // grouped page background
+val LightSurface = Color(0xFFF2F2F7)
+val LightSurfaceLow = Color(0xFFF7F7FA)
+val LightSurfaceContainer = Color(0xFFFFFFFF)   // cards
+val LightSurfaceHigh = Color(0xFFE9E9EE)        // segmented-control track, chips
+val LightSurfaceHighest = Color(0xFFDCDCE2)     // progress tracks
+val LightOnSurface = Color(0xFF111114)
+val LightOnSurfaceVariant = Color(0xFF66666C)   // secondary text (4.9:1 on the page)
+val LightOutline = Color(0xFF8E8E93)
+val LightOutlineVariant = Color(0xFFD5D5DA)     // hairline separators
 
-// Dark theme surfaces (tinted with Deep Purple A1)
-val DarkBackground = Color(0xFF120A1F)
-val DarkSurface = Color(0xFF160E24)
-val DarkSurfaceLow = Color(0xFF1C1330)
-val DarkSurfaceContainer = Color(0xFF221838)
-val DarkSurfaceHigh = Color(0xFF2A2042)
-val DarkSurfaceHighest = Color(0xFF33284D)
-val DarkOnSurface = Color(0xFFECE8F4)
-val DarkOnSurfaceVariant = Color(0xFFB9B0CC)
-val DarkOutline = Color(0xFF8A809E)
-val DarkOutlineVariant = Color(0xFF3B3154)
+// Dark theme surfaces: pure black so the bright metric colours stand out
+// ("contrasting colours on dark mode" from the visual guide)
+val DarkBackground = Color(0xFF000000)
+val DarkSurface = Color(0xFF000000)
+val DarkSurfaceLow = Color(0xFF111113)
+val DarkSurfaceContainer = Color(0xFF1C1C1E)    // cards
+val DarkSurfaceHigh = Color(0xFF2C2C2E)         // segmented-control track, chips
+val DarkSurfaceHighest = Color(0xFF3A3A3C)      // progress tracks
+val DarkOnSurface = Color(0xFFF5F5F7)
+val DarkOnSurfaceVariant = Color(0xFFA1A1A8)    // secondary text
+val DarkOutline = Color(0xFF6E6E73)
+val DarkOutlineVariant = Color(0xFF38383A)      // hairline separators
 
 /** Logo gradient: amber -> pink -> violet -> blue -> mint (used for hero accents). */
 val BrandGradientColors = listOf(Amber, Pink, SoftViolet, BrightBlue, Success)
