@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.esandi.healthmate.ui.theme.HealthMateTheme
-import com.esandi.healthmate.ui.theme.ThemeShowcaseScreen
 
 /**
  * The app's single activity. Every screen is a Compose function shown inside it.
@@ -20,8 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HealthMateTheme {
-                // Temporary: replaced by the navigation host and real screens in tasks 2.3-2.4.
-                ThemeShowcaseScreen()
+                HealthMateApp()
             }
         }
     }

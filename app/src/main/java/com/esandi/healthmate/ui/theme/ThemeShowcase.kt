@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.esandi.healthmate.ui.components.ComponentGallery
+import com.esandi.healthmate.ui.components.DetailTopBar
 import com.esandi.healthmate.ui.components.MetricCard
 import com.esandi.healthmate.ui.components.MetricType
 
@@ -41,8 +42,11 @@ import com.esandi.healthmate.ui.components.MetricType
  * but kept in the project as a living style guide for the report's UI/UX section.
  */
 @Composable
-fun ThemeShowcaseScreen(modifier: Modifier = Modifier) {
-    Scaffold(modifier = modifier) { innerPadding ->
+fun ThemeShowcaseScreen(modifier: Modifier = Modifier, onBack: (() -> Unit)? = null) {
+    Scaffold(
+        modifier = modifier,
+        topBar = { if (onBack != null) DetailTopBar(title = "Design system", onBack = onBack) },
+    ) { innerPadding ->
         LazyColumn(
             contentPadding = PaddingValues(
                 start = 20.dp,

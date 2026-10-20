@@ -26,6 +26,9 @@ sealed class HealthMateDestination(val route: String) {
         fun createRoute(recordId: Long) = "record/details/$recordId"
     }
 
+    // Style guide of colours, fonts and components (opened from Profile)
+    data object DesignSystem : HealthMateDestination("design-system")
+
     companion object {
         const val RECORD_ID_ARG = "recordId"
         val bottomBarDestinations = listOf(Home, History, Progress, Profile)
