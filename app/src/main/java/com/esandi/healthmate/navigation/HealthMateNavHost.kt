@@ -65,10 +65,11 @@ fun HealthMateNavHost(
 
         // ---- Screens pushed on top ----
         pushedComposable(HealthMateDestination.AddRecord.route) {
-            RecordFormScreen(recordId = null, onBack = { navController.popBackStack() })
+            RecordFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
         }
-        pushedComposable(HealthMateDestination.EditRecord.route, recordIdArgument) { entry ->
-            RecordFormScreen(recordId = entry.recordId(), onBack = { navController.popBackStack() })
+        pushedComposable(HealthMateDestination.EditRecord.route, recordIdArgument) {
+            // The form's ViewModel reads {recordId} from the route itself (SavedStateHandle).
+            RecordFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
         }
         pushedComposable(HealthMateDestination.RecordDetails.route, recordIdArgument) { entry ->
             RecordDetailsScreen(
