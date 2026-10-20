@@ -2,6 +2,7 @@ package com.esandi.healthmate.util
 
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -14,6 +15,7 @@ object Formatters {
     private val integerFormat: NumberFormat = NumberFormat.getIntegerInstance(Locale.getDefault())
     private val longDate: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.getDefault())
     private val fullDate: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
+    private val timeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
 
     /** 7850 -> "7,850" */
     fun number(value: Int): String = integerFormat.format(value)
@@ -38,4 +40,14 @@ object Formatters {
 
     /** 2026-10-27 -> "27 October 2026" */
     fun dateFull(date: LocalDate): String = date.format(fullDate)
+
+    /** 10:24 -> "10:24 AM" */
+    fun time(time: LocalTime): String = time.format(timeFormat)
+
+    /** "Today", "Yesterday", or e.g. "Mon, 19 Oct 2026" */
+    fun relativeDay(date: LocalDate, today: LocalDate = LocalDate.now()): String = when (date) {
+        today -> "Today"
+        today.minusDays(1) -> "Yesterday"
+        else -> this.date(date)
+    }
 }

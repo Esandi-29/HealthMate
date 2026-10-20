@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -25,24 +26,33 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
-/** Labelled horizontal bar showing progress towards a goal, e.g. "Today's goal · 53% completed". */
+/**
+ * Labelled horizontal bar showing progress towards a goal, e.g. "Today's goal · 53% completed".
+ * Pass a [brush] (e.g. the app-icon gradient) to fill the bar with a gradient instead of [color];
+ * [trailing] can show extra content next to the label, such as a status pill.
+ */
 @Composable
 fun GoalProgressBar(
     label: String,
     progress: Float,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.primary,
+    brush: Brush? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val clamped = progress.coerceIn(0f, 1f)
     val animated by animateFloatAsState(clamped, animationSpec = tween(900), label = "goalBar")
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            Text(
-                "${(clamped * 100).roundToInt()}% completed",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Column(Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "${(clamped * 100).roundToInt()}% completed",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (trailing != null) trailing()
         }
         Box(
             Modifier
@@ -57,7 +67,7 @@ fun GoalProgressBar(
                     .fillMaxHeight()
                     .fillMaxWidth(animated)
                     .clip(CircleShape)
-                    .background(color),
+                    .then(if (brush != null) Modifier.background(brush) else Modifier.background(color)),
             )
         }
     }

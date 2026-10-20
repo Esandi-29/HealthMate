@@ -12,12 +12,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.esandi.healthmate.navigation.HealthMateBottomBar
 import com.esandi.healthmate.navigation.HealthMateDestination
 import com.esandi.healthmate.navigation.HealthMateNavHost
+import com.esandi.healthmate.navigation.navigateToTab
 
 /**
  * The app shell: the bottom tab bar plus the area where screens are shown.
@@ -41,14 +41,7 @@ fun HealthMateApp() {
             ) {
                 HealthMateBottomBar(
                     currentRoute = currentRoute,
-                    onNavigate = { destination ->
-                        navController.navigate(destination.route) {
-                            // Standard tab behaviour: one copy of each tab, and each tab keeps its scroll state.
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
+                    onNavigate = { destination -> navController.navigateToTab(destination) },
                     onAdd = { navController.navigate(HealthMateDestination.AddRecord.route) },
                 )
             }
