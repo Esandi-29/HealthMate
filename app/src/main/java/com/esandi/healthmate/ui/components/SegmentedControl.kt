@@ -36,10 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.esandi.healthmate.ui.theme.HealthMateMotion
 
 /**
- * iOS-style segmented control for choosing a metric (Steps / Calories / Water / Sleep),
- * as in the Add and Edit record wireframes. One rounded track with a raised "thumb" that
- * slides to the selected segment with a spring, plus a light haptic tick on change.
- * Each segment is 42 dp tall, so the control meets the 48 dp touch-target guideline.
+ * Metric picker for the Add and Edit record wireframes (Steps / Calories / Water / Sleep),
+ * built on the shared [SegmentedControl]; a coloured dot links each option to its metric.
  */
 @Composable
 fun MetricTabs(
@@ -47,6 +45,30 @@ fun MetricTabs(
     onSelect: (MetricType) -> Unit,
     modifier: Modifier = Modifier,
     metrics: List<MetricType> = MetricType.entries,
+) {
+    SegmentedControl(
+        options = metrics,
+        selected = selected,
+        onSelect = onSelect,
+        label = { it.label },
+        modifier = modifier,
+        dotColor = { it.color },
+    )
+}
+
+/**
+ * iOS-style segmented control: one rounded track with a raised "thumb" that slides to the
+ * selected option with a spring, plus a light haptic tick on change. Used for the metric picker
+ * and the History date filter. Each segment is 42 dp tall (48 dp touch target with the track).
+ */
+@Composable
+fun <T> SegmentedControl(
+    options: List<T>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    label: (T) -> String,
+    modifier: Modifier = Modifier,
+    dotColor: (@Composable (T) -> Color)? = null,
 ) {
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val thumbColor = if (isDark) Color(0xFF5A5A5F) else Color.White
@@ -56,8 +78,8 @@ fun MetricTabs(
 
     Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         BoxWithConstraints(Modifier.padding(3.dp)) {
-            val segmentWidth = (maxWidth - gap * (metrics.size - 1)) / metrics.size
-            val index = metrics.indexOf(selected).coerceAtLeast(0)
+            val segmentWidth = (maxWidth - gap * (options.size - 1)) / options.size
+            val index = options.indexOf(selected).coerceAtLeast(0)
             val thumbOffset by animateDpAsState(
                 targetValue = (segmentWidth + gap) * index,
                 animationSpec = HealthMateMotion.snappy(),
@@ -77,8 +99,8 @@ fun MetricTabs(
                 modifier = Modifier.fillMaxWidth().selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(gap),
             ) {
-                metrics.forEach { metric ->
-                    val isSelected = metric == selected
+                options.forEach { option ->
+                    val isSelected = option == selected
                     val textColor by animateColorAsState(
                         if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                         label = "segmentText",
@@ -92,20 +114,22 @@ fun MetricTabs(
                                 selected = isSelected,
                                 onClick = {
                                     if (!isSelected) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    onSelect(metric)
+                                    onSelect(option)
                                 },
                                 role = Role.Tab,
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(7.dp).background(metric.color, CircleShape))
+                            if (dotColor != null) {
+                                Box(Modifier.size(7.dp).background(dotColor(option), CircleShape))
+                            }
                             Text(
-                                text = metric.label,
+                                text = label(option),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                                 color = textColor,
-                                modifier = Modifier.padding(start = 5.dp),
+                                modifier = Modifier.padding(start = if (dotColor != null) 5.dp else 0.dp),
                                 maxLines = 1,
                             )
                         }

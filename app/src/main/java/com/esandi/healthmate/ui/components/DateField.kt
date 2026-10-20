@@ -68,26 +68,46 @@ fun DateField(
     }
 
     if (showPicker) {
-        val todayUtcMillis = remember { LocalDate.now().toUtcMillis() }
-        val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = date.toUtcMillis(),
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                    allowFutureDates || utcTimeMillis <= todayUtcMillis
+        HealthDatePickerDialog(
+            initialDate = date,
+            allowFutureDates = allowFutureDates,
+            onDismiss = { showPicker = false },
+            onConfirm = {
+                onDateChange(it)
+                showPicker = false
             },
         )
-        DatePickerDialog(
-            onDismissRequest = { showPicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    pickerState.selectedDateMillis?.let { onDateChange(it.toLocalDate()) }
-                    showPicker = false
-                }) { Text("OK") }
-            },
-            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel") } },
-        ) {
-            DatePicker(state = pickerState)
-        }
+    }
+}
+
+/**
+ * Material calendar picker in a dialog, shared by [DateField] and the History date search.
+ * Future dates are disabled unless [allowFutureDates] is true.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HealthDatePickerDialog(
+    initialDate: LocalDate?,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate) -> Unit,
+    allowFutureDates: Boolean = false,
+) {
+    val todayUtcMillis = remember { LocalDate.now().toUtcMillis() }
+    val pickerState = rememberDatePickerState(
+        initialSelectedDateMillis = (initialDate ?: LocalDate.now()).toUtcMillis(),
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                allowFutureDates || utcTimeMillis <= todayUtcMillis
+        },
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { pickerState.selectedDateMillis?.let { onConfirm(it.toLocalDate()) } ?: onDismiss() }) { Text("OK") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    ) {
+        DatePicker(state = pickerState)
     }
 }
 
