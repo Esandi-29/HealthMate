@@ -47,7 +47,11 @@ fun HealthMateNavHost(
     ) {
         // ---- Bottom-bar tabs ----
         composable(HealthMateDestination.Home.route) {
-            DashboardScreen(onAddRecord = { navController.navigate(HealthMateDestination.AddRecord.route) })
+            DashboardScreen(
+                onAddRecord = { navController.navigate(HealthMateDestination.AddRecord.route) },
+                onOpenRecord = { id -> navController.navigate(HealthMateDestination.RecordDetails.createRoute(id)) },
+                onSeeAllRecords = { navController.navigateToTab(HealthMateDestination.History) },
+            )
         }
         composable(HealthMateDestination.History.route) {
             HistoryScreen(onOpenRecord = { id -> navController.navigate(HealthMateDestination.RecordDetails.createRoute(id)) })
