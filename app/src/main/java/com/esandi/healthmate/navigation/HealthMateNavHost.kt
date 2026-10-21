@@ -35,7 +35,7 @@ private const val FADE_DURATION = 200
 @Composable
 fun HealthMateNavHost(
     navController: NavHostController,
-    onShowMessage: (String) -> Unit,
+    onRecordSaved: (record: HealthRecord, wasEdit: Boolean) -> Unit,
     onRecordDeleted: (HealthRecord) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -70,14 +70,14 @@ fun HealthMateNavHost(
         pushedComposable(HealthMateDestination.AddRecord.route) {
             RecordFormScreen(
                 onBack = { navController.popBackStack() },
-                onSaved = { message -> navController.popBackStack(); onShowMessage(message) },
+                onSaved = { record, wasEdit -> navController.popBackStack(); onRecordSaved(record, wasEdit) },
             )
         }
         pushedComposable(HealthMateDestination.EditRecord.route, recordIdArgument) {
             // The form's ViewModel reads {recordId} from the route itself (SavedStateHandle).
             RecordFormScreen(
                 onBack = { navController.popBackStack() },
-                onSaved = { message -> navController.popBackStack(); onShowMessage(message) },
+                onSaved = { record, wasEdit -> navController.popBackStack(); onRecordSaved(record, wasEdit) },
             )
         }
         pushedComposable(HealthMateDestination.RecordDetails.route, recordIdArgument) {

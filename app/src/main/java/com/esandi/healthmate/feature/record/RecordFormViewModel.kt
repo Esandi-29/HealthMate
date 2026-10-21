@@ -36,14 +36,13 @@ data class RecordFormUiState(
     val isSaving: Boolean = false,
     /** Becomes true once the record passed validation and was saved; the screen then closes. */
     val isSaved: Boolean = false,
+    /** The record as it was written to the database (used for the confirmation banner). */
+    val savedRecord: HealthRecord? = null,
     /** Today's totals before this entry, and the daily goals - used by the animated illustrations. */
     val todayTotals: DailyTotals = DailyTotals(),
     val goals: DailyGoals = DailyGoals(),
 ) {
     val isEditing: Boolean get() = recordId != null
-
-    /** Confirmation shown after saving, e.g. "Water record added". */
-    val savedMessage: String get() = "${metric.label} record ${if (isEditing) "updated" else "added"}"
     val sleepMinutes: Int get() = RecordValidator.sleepMinutes(bedtime, wakeTime)
 
     private fun entered(text: String) = text.toIntOrNull() ?: 0
@@ -149,7 +148,7 @@ class RecordFormViewModel(
         viewModelScope.launch {
             try {
                 if (state.isEditing) repository.update(record) else repository.add(record)
-                _uiState.update { it.copy(isSaving = false, isSaved = true) }
+                _uiState.update { it.copy(isSaving = false, isSaved = true, savedRecord = record) }
             } catch (e: Exception) {
                 // e.g. the database could not be written; keep the form open so nothing is lost.
                 _uiState.update { it.copy(isSaving = false, valueError = "Couldn't save the record. Please try again.") }
