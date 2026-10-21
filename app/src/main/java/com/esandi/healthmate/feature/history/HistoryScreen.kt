@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.esandi.healthmate.di.AppViewModelProvider
 import com.esandi.healthmate.data.model.DailyTotals
 import com.esandi.healthmate.data.sample.SampleData
 import com.esandi.healthmate.ui.components.EmptyState
@@ -62,7 +63,7 @@ import java.time.LocalDate
 fun HistoryScreen(
     onOpenRecord: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: HistoryViewModel = viewModel(),
+    viewModel: HistoryViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     HistoryContent(
@@ -122,7 +123,9 @@ fun HistoryContent(
             }
         }
 
-        if (state.groups.isEmpty()) {
+        if (state.isLoading) {
+            // Nothing to show yet; the first database result arrives in a few milliseconds.
+        } else if (state.groups.isEmpty()) {
             item {
                 HealthCard(Modifier.fillMaxWidth()) {
                     EmptyState(

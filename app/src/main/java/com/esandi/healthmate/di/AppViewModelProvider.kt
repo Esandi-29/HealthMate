@@ -10,6 +10,7 @@ import com.esandi.healthmate.HealthMateAppViewModel
 import com.esandi.healthmate.HealthMateApplication
 import com.esandi.healthmate.data.repository.HealthRecordRepository
 import com.esandi.healthmate.feature.dashboard.DashboardViewModel
+import com.esandi.healthmate.feature.history.HistoryViewModel
 import com.esandi.healthmate.feature.record.RecordDetailsViewModel
 import com.esandi.healthmate.feature.record.RecordFormViewModel
 
@@ -32,6 +33,9 @@ object AppViewModelProvider {
         }
         initializer {
             RecordDetailsViewModel(createSavedStateHandle(), repository())
+        }
+        initializer {
+            HistoryViewModel(repository())
         }
         initializer {
             HealthMateAppViewModel(repository())

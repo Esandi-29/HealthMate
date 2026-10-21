@@ -40,6 +40,20 @@ object HistoryFilter {
     fun groupByDay(records: List<HealthRecord>): List<DayGroup> =
         records.groupBy { it.date }.map { (date, dayRecords) -> DayGroup(date, dayRecords) }
 
+    /**
+     * The first and last day (inclusive) that the date filter allows, used to build the SQL query.
+     * Null means no date limit ("All"). A specific date overrides the quick range.
+     */
+    fun dateRangeFor(filters: HistoryFilters, today: LocalDate = LocalDate.now()): Pair<LocalDate, LocalDate>? {
+        filters.date?.let { return it to it }
+        return when (filters.range) {
+            DateRange.ALL -> null
+            DateRange.TODAY -> today to today
+            DateRange.WEEK -> today.minusDays(6) to today
+            DateRange.MONTH -> today.minusDays(29) to today
+        }
+    }
+
     private fun matchesDate(date: LocalDate, filters: HistoryFilters, today: LocalDate): Boolean {
         filters.date?.let { return date == it }
         return when (filters.range) {
