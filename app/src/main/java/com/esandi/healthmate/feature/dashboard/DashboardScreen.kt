@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.esandi.healthmate.di.AppViewModelProvider
 import com.esandi.healthmate.data.model.DailyTotals
 import com.esandi.healthmate.data.sample.SampleData
 import com.esandi.healthmate.ui.components.EmptyState
@@ -57,7 +58,7 @@ fun DashboardScreen(
     onOpenRecord: (Long) -> Unit,
     onSeeAllRecords: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = viewModel(),
+    viewModel: DashboardViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DashboardContent(state, onAddRecord, onOpenRecord, onSeeAllRecords, modifier)

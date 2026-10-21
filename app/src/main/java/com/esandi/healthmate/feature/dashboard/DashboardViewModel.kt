@@ -1,14 +1,16 @@
 package com.esandi.healthmate.feature.dashboard
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.esandi.healthmate.data.model.DailyGoals
 import com.esandi.healthmate.data.model.DailyTotals
 import com.esandi.healthmate.data.model.HealthRecord
-import com.esandi.healthmate.data.sample.SampleData
+import com.esandi.healthmate.data.repository.HealthRecordRepository
 import com.esandi.healthmate.ui.components.primaryMetric
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -42,25 +44,41 @@ data class DashboardUiState(
  * ViewModel for the Dashboard (MVVM): prepares the screen state and exposes it as a StateFlow.
  * The screen observes [uiState] and redraws automatically whenever it changes.
  *
- * For now the data comes from [SampleData]; in Phase 3 (task 3.3) it will come from the
- * HealthRecord repository (Room database), and the screen code will not need to change.
+ * The data comes live from the Room database through [repository]:
+ *  - today's totals are added up by SQLite itself (SUM ... WHERE date = today);
+ *  - this week's records give the dots on the week strip;
+ *  - all records give the "Latest records" list.
+ * Room re-runs these queries whenever health_records changes, so after a record is added,
+ * edited or deleted the Dashboard updates by itself - no refresh code is needed.
  */
-class DashboardViewModel : ViewModel() {
+class DashboardViewModel(
+    private val repository: HealthRecordRepository,
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(buildState(LocalDate.now()))
-    val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
+    private val today: LocalDate = LocalDate.now()
+    private val week: List<LocalDate> =
+        today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).let { monday -> (0L..6L).map { monday.plusDays(it) } }
 
-    private fun buildState(today: LocalDate): DashboardUiState {
-        val records = SampleData.records(today)
-        val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        return DashboardUiState(
-            today = today,
-            week = (0L..6L).map { monday.plusDays(it) },
-            daysWithRecords = records.map { it.date }.toSet(),
-            totals = DailyTotals.of(records.filter { it.date == today }),
-            recentRecords = latestPerMetric(records),
+    val uiState: StateFlow<DashboardUiState> =
+        combine(
+            repository.observeTotals(today),
+            repository.observeBetween(week.first(), week.last()),
+            repository.observeAll(),
+        ) { totals, weekRecords, allRecords ->
+            DashboardUiState(
+                today = today,
+                week = week,
+                daysWithRecords = weekRecords.map { it.date }.toSet(),
+                totals = totals,
+                recentRecords = latestPerMetric(allRecords),
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            // Keep listening for 5 s after the screen goes away (e.g. during rotation),
+            // then stop so the database is not queried for a screen nobody is looking at.
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = DashboardUiState(today = today, week = week),
         )
-    }
 
     companion object {
         /**
