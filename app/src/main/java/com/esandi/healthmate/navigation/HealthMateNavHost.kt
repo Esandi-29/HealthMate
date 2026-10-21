@@ -15,6 +15,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.esandi.healthmate.data.model.HealthRecord
 import com.esandi.healthmate.feature.dashboard.DashboardScreen
 import com.esandi.healthmate.feature.history.HistoryScreen
 import com.esandi.healthmate.feature.profile.ProfileScreen
@@ -34,6 +35,8 @@ private const val FADE_DURATION = 200
 @Composable
 fun HealthMateNavHost(
     navController: NavHostController,
+    onShowMessage: (String) -> Unit,
+    onRecordDeleted: (HealthRecord) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -65,18 +68,24 @@ fun HealthMateNavHost(
 
         // ---- Screens pushed on top ----
         pushedComposable(HealthMateDestination.AddRecord.route) {
-            RecordFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
+            RecordFormScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = { message -> navController.popBackStack(); onShowMessage(message) },
+            )
         }
         pushedComposable(HealthMateDestination.EditRecord.route, recordIdArgument) {
             // The form's ViewModel reads {recordId} from the route itself (SavedStateHandle).
-            RecordFormScreen(onBack = { navController.popBackStack() }, onSaved = { navController.popBackStack() })
+            RecordFormScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = { message -> navController.popBackStack(); onShowMessage(message) },
+            )
         }
         pushedComposable(HealthMateDestination.RecordDetails.route, recordIdArgument) {
             // The details ViewModel reads {recordId} from the route itself (SavedStateHandle).
             RecordDetailsScreen(
                 onBack = { navController.popBackStack() },
                 onEdit = { id -> navController.navigate(HealthMateDestination.EditRecord.createRoute(id)) },
-                onDeleted = { navController.popBackStack() },
+                onDeleted = { record -> navController.popBackStack(); onRecordDeleted(record) },
             )
         }
         pushedComposable(HealthMateDestination.DesignSystem.route) {

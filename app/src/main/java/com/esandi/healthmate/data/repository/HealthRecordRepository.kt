@@ -26,6 +26,9 @@ interface HealthRecordRepository {
     suspend fun add(record: HealthRecord): Long
     suspend fun update(record: HealthRecord)
     suspend fun delete(record: HealthRecord)
+
+    /** Puts a deleted record back with its original id (used by Undo). */
+    suspend fun restore(record: HealthRecord)
 }
 
 /** Room-backed implementation. Room runs suspend DAO calls on a background thread itself. */
@@ -54,4 +57,8 @@ class RoomHealthRecordRepository(
     override suspend fun update(record: HealthRecord) = dao.update(record.toEntity())
 
     override suspend fun delete(record: HealthRecord) = dao.delete(record.toEntity())
+
+    override suspend fun restore(record: HealthRecord) {
+        dao.insert(record.toEntity())
+    }
 }

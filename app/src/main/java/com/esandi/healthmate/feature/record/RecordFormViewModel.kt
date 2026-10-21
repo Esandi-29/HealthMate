@@ -2,10 +2,11 @@ package com.esandi.healthmate.feature.record
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.esandi.healthmate.data.model.DailyGoals
 import com.esandi.healthmate.data.model.DailyTotals
 import com.esandi.healthmate.data.model.HealthRecord
-import com.esandi.healthmate.data.sample.SampleData
+import com.esandi.healthmate.data.repository.HealthRecordRepository
 import com.esandi.healthmate.navigation.HealthMateDestination.Companion.RECORD_ID_ARG
 import com.esandi.healthmate.ui.components.MetricType
 import com.esandi.healthmate.ui.components.primaryMetric
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -30,6 +32,8 @@ data class RecordFormUiState(
     /** Validation message for the selected metric, shown after the user taps Save. */
     val valueError: String? = null,
     val noteError: String? = null,
+    /** True while the record is being written, so a second tap on Save is ignored. */
+    val isSaving: Boolean = false,
     /** Becomes true once the record passed validation and was saved; the screen then closes. */
     val isSaved: Boolean = false,
     /** Today's totals before this entry, and the daily goals - used by the animated illustrations. */
@@ -37,6 +41,9 @@ data class RecordFormUiState(
     val goals: DailyGoals = DailyGoals(),
 ) {
     val isEditing: Boolean get() = recordId != null
+
+    /** Confirmation shown after saving, e.g. "Water record added". */
+    val savedMessage: String get() = "${metric.label} record ${if (isEditing) "updated" else "added"}"
     val sleepMinutes: Int get() = RecordValidator.sleepMinutes(bedtime, wakeTime)
 
     private fun entered(text: String) = text.toIntOrNull() ?: 0
@@ -54,36 +61,48 @@ data class RecordFormUiState(
     val calorieIntensity: Float get() = entered(caloriesText) / 800f
 }
 
+private const val BOTTLE_ML = 1_000
+
 /**
  * ViewModel for the Add / Edit Record form (MVVM). The screen reports every user action here;
- * the ViewModel updates [uiState], validates on Save, and (from Phase 3) writes to the database.
+ * the ViewModel updates [uiState], validates on Save, and writes to the Room database
+ * through [repository] (insert for a new record, update for an existing one).
  *
  * The record id comes from the navigation route ("record/edit/{recordId}") via [SavedStateHandle];
  * it is absent when adding a new record.
  */
-private const val BOTTLE_ML = 1_000
-
-class RecordFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
+class RecordFormViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val repository: HealthRecordRepository,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RecordFormUiState())
     val uiState: StateFlow<RecordFormUiState> = _uiState.asStateFlow()
 
+    /** When editing, the record's original time is kept (except for sleep, which uses wake-up time). */
+    private var originalTime: LocalTime? = null
+
     init {
-        // Phase 3 (task 3.3): today's totals will come from the repository.
-        val today = LocalDate.now()
-        _uiState.update { it.copy(todayTotals = DailyTotals.of(SampleData.records(today).filter { r -> r.date == today })) }
+        // Today's totals (live from SQLite) feed the footprint trail and water caption.
+        viewModelScope.launch {
+            repository.observeTotals(LocalDate.now()).collect { totals ->
+                _uiState.update { it.copy(todayTotals = totals) }
+            }
+        }
 
         val id = savedStateHandle.get<Long>(RECORD_ID_ARG)
         if (id != null) {
-            // Phase 3 (task 3.2): load from the repository instead of sample data.
-            SampleData.records().find { it.id == id }?.let { loadForEditing(it) }
-                ?: _uiState.update { it.copy(recordId = id) }
+            _uiState.update { it.copy(recordId = id) }
+            viewModelScope.launch {
+                repository.getRecord(id)?.let { loadForEditing(it) }
+            }
         }
     }
 
     private fun loadForEditing(record: HealthRecord) {
+        originalTime = record.time
         val metric = record.primaryMetric()
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             recordId = record.id,
             metric = metric,
             date = record.date,
@@ -94,7 +113,7 @@ class RecordFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             wakeTime = if (metric == MetricType.SLEEP) record.time else LocalTime.of(6, 30),
             bedtime = if (metric == MetricType.SLEEP) record.time.minusMinutes(record.sleepMinutes.toLong()) else LocalTime.of(22, 30),
             note = record.note.orEmpty(),
-        )
+        ) }
     }
 
     fun onMetricChange(metric: MetricType) = _uiState.update { it.copy(metric = metric, valueError = null) }
@@ -111,6 +130,7 @@ class RecordFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     /** Validates the selected metric, the date and the note. Saves only when everything is valid. */
     fun onSave() {
         val state = _uiState.value
+        if (state.isSaving) return
         val valueError = when (state.metric) {
             MetricType.STEPS -> RecordValidator.validateSteps(state.stepsText)
             MetricType.CALORIES -> RecordValidator.validateCalories(state.caloriesText)
@@ -123,8 +143,40 @@ class RecordFormViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             _uiState.update { it.copy(valueError = valueError, noteError = noteError) }
             return
         }
-        // Phase 3 (task 3.2): insert or update the record in the Room database here.
-        _uiState.update { it.copy(isSaved = true) }
+
+        val record = buildRecord(state)
+        _uiState.update { it.copy(isSaving = true) }
+        viewModelScope.launch {
+            try {
+                if (state.isEditing) repository.update(record) else repository.add(record)
+                _uiState.update { it.copy(isSaving = false, isSaved = true) }
+            } catch (e: Exception) {
+                // e.g. the database could not be written; keep the form open so nothing is lost.
+                _uiState.update { it.copy(isSaving = false, valueError = "Couldn't save the record. Please try again.") }
+            }
+        }
+    }
+
+    /**
+     * Turns the form into a [HealthRecord] for the selected metric only (one row per entry);
+     * the other metric columns are 0. A new id of 0 lets SQLite generate the id.
+     */
+    private fun buildRecord(state: RecordFormUiState): HealthRecord {
+        val metric = state.metric
+        val time = when {
+            metric == MetricType.SLEEP -> state.wakeTime
+            else -> originalTime ?: LocalTime.now().withSecond(0).withNano(0)
+        }
+        return HealthRecord(
+            id = state.recordId ?: 0L,
+            date = state.date,
+            time = time,
+            steps = if (metric == MetricType.STEPS) state.stepsText.toIntOrNull() ?: 0 else 0,
+            calories = if (metric == MetricType.CALORIES) state.caloriesText.toIntOrNull() ?: 0 else 0,
+            waterMl = if (metric == MetricType.WATER) state.waterText.toIntOrNull() ?: 0 else 0,
+            sleepMinutes = if (metric == MetricType.SLEEP) state.sleepMinutes else 0,
+            note = state.note.trim().ifBlank { null },
+        )
     }
 
     /** Keeps digits only and limits the length, so the field can never hold letters or symbols. */

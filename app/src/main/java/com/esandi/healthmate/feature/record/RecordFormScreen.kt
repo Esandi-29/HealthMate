@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.esandi.healthmate.di.AppViewModelProvider
 import com.esandi.healthmate.ui.components.DateField
 import com.esandi.healthmate.ui.components.DetailTopBar
 import com.esandi.healthmate.ui.components.HealthCard
@@ -57,15 +58,15 @@ import java.time.LocalTime
 @Composable
 fun RecordFormScreen(
     onBack: () -> Unit,
-    onSaved: () -> Unit,
+    onSaved: (message: String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: RecordFormViewModel = viewModel(),
+    viewModel: RecordFormViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // When the ViewModel reports a successful save, leave the screen (one-off event).
     LaunchedEffect(state.isSaved) {
-        if (state.isSaved) onSaved()
+        if (state.isSaved) onSaved(state.savedMessage)
     }
 
     RecordFormContent(

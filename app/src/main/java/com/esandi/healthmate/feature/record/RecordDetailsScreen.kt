@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.esandi.healthmate.data.model.DailyGoals
 import com.esandi.healthmate.data.model.HealthRecord
 import com.esandi.healthmate.data.sample.SampleData
+import com.esandi.healthmate.di.AppViewModelProvider
 import com.esandi.healthmate.ui.components.DetailTopBar
 import com.esandi.healthmate.ui.components.EmptyState
 import com.esandi.healthmate.ui.components.GoalProgressBar
@@ -53,12 +54,13 @@ import com.esandi.healthmate.util.Formatters
 fun RecordDetailsScreen(
     onBack: () -> Unit,
     onEdit: (Long) -> Unit,
-    onDeleted: () -> Unit,
+    onDeleted: (HealthRecord) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: RecordDetailsViewModel = viewModel(),
+    viewModel: RecordDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(state.isDeleted) { if (state.isDeleted) onDeleted() }
+    // After deleting, close the screen and hand the record back so the app can offer Undo.
+    LaunchedEffect(state.isDeleted) { if (state.isDeleted) state.record?.let(onDeleted) }
 
     RecordDetailsContent(
         state = state,
@@ -90,6 +92,7 @@ fun RecordDetailsContent(
         Column {
             DetailTopBar(title = "Record details", onBack = onBack)
             if (record == null) {
+                if (state.isLoading) return@Column
                 EmptyState(
                     icon = Icons.Rounded.SearchOff,
                     title = "Record not found",
